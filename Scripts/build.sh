@@ -1,11 +1,12 @@
 #!/bin/bash
 
 if [ -z "$1" ]; then
-    echo "Usage: $0 <path_to_binary>"
+    echo "Usage: $0 <path_to_binary> [additional_parameters]"
     exit 1
 fi
 
 BINARY="$1"
+shift # Shift the arguments to have the parameters to start the binary
 
 # Check if the file exists
 if [ ! -f "$BINARY" ]; then
@@ -30,5 +31,9 @@ fi
 
 # Compiling the kernel
 echo "Compiling the kernel now..."
-make defconfig
-make -j$(nproc)
+#make defconfig
+#make -j$(nproc)
+
+# Test - Execute Binary
+echo "Starting the binary with parameters: $@"
+"$BINARY" "$@"
