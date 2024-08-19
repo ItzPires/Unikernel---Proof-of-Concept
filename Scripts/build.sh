@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -z "$1" ]; then
+if [ -z "$1" ] || [ "$1" == "-h" ]; then
     echo "Usage: $0 <path_to_binary> [additional_parameters]"
     exit 1
 fi
@@ -31,9 +31,35 @@ fi
 
 # Compiling the kernel
 echo "Compiling the kernel now..."
-#make defconfig
-#make -j$(nproc)
+make defconfig
+make -j$(nproc)
 
-# Test - Execute Binary
-echo "Starting the binary with parameters: $@"
-"$BINARY" "$@"
+# Image creation
+echo "Preparing the image..."
+mkdir -p ../Output/initramfs/{bin,sbin,etc,proc,sys,newroot}
+cp "$BINARY" ../Output/initramfs/bin/
+
+# Program initiation file in unikernel
+cat << EOF > ../Output/initramfs/init
+#!/bin/sh
+mount -t proc none /proc
+mount -t sysfs none /sys
+echo "[Unikernel Proof of Concept]"
+$BINARY $@
+EOF
+
+chmod +x ../Output/initramfs/init
+
+# Image compilation
+cp -a /bin/busybox ../Output/initramfs/bin/
+cd ../Output/initramfs/bin
+for i in $(./busybox --list); do ln -s busybox $i; done
+cd ../
+find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../image.img
+cd ..
+
+# Remove aux files
+rm -r initramfs
+
+# Done
+echo "Unikernel Compiled"
