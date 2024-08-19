@@ -6,6 +6,7 @@ if [ -z "$1" ] || [ "$1" == "-h" ]; then
 fi
 
 BINARY="$1"
+BINARY_BIN="/bin/$(basename "$BINARY")"
 shift # Shift the arguments to have the parameters to start the binary
 
 # Check if the file exists
@@ -45,7 +46,8 @@ cat << EOF > ../Output/initramfs/init
 mount -t proc none /proc
 mount -t sysfs none /sys
 echo "[Unikernel Proof of Concept]"
-$BINARY $@
+$BINARY_BIN $@
+poweroff -f
 EOF
 
 chmod +x ../Output/initramfs/init
