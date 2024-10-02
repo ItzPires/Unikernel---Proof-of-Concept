@@ -10,6 +10,14 @@ Based on the Unikernel concept and what currently exists, it was decided to use 
 
 This project was born from an idea explored in the context of a Master's thesis.
 
+## Supported Execution Environments
+  
+| Environment | :heavy_check_mark: / :x:|
+|--|--|
+|QEMU| :heavy_check_mark: |
+|VMware | :heavy_check_mark: |
+|VMware ESXi | :heavy_check_mark: |
+
 ## Installation Guide
 
 Follow the steps below to configure and run the project:
@@ -43,7 +51,13 @@ git submodule update --init --recursive
 ```bash
 ./Scripts/run.sh -t qemu
 ```
-- To run the Unikernel in VMWare:
+- To run the Unikernel in VMware:
 ```bash
 ./Scripts/run.sh -t vmware
 ```
+
+This command will generate a file called disk.vmdk in the Output folder. To run the kernel in VMware, you must create a virtual machine in VMware, and during creation, you must select you will install the operating system later. In the disk creation menu, you should select, "Use an existing disk", and select the disk.vmdk file. The virtual machine is ready to be started.
+
+- To run the Unikernel in VMware ESXi:
+
+You must follow all the creation steps in VMware and then export the virtual machine in OVF. With these export files, you can create a virtual machine in VMware ESXi.
