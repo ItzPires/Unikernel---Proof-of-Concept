@@ -77,7 +77,7 @@ echo "Montando a partição ${LOOP_DEVICE}p1 em $MOUNT_DIR..."
 sudo mount ${LOOP_DEVICE}p1 $MOUNT_DIR
 
 echo "Instalando o GRUB no dispositivo loop..."
-sudo grub-install --boot-directory=$MOUNT_DIR/boot $LOOP_DEVICE
+sudo grub-install --boot-directory=$MOUNT_DIR/boot --target=i386-pc $LOOP_DEVICE
 
 echo "Copiando arquivos de kernel e imagem para o diretório de boot..."
 sudo cp $KERNEL $MOUNT_DIR/boot/
@@ -85,13 +85,16 @@ sudo cp $IMAGE $MOUNT_DIR/boot/
 
 echo "Criando o arquivo grub.cfg..."
 cat <<EOF > $MOUNT_DIR/boot/grub/grub.cfg
+set default=0
+set timeout=0
+
 menuentry "Unikernel" {
     linux /boot/bzImage
     initrd /boot/image.img
 }
 EOF
 
-sudo umount /mnt/disk
+sudo umount $MOUNT_DIR
 
 qemu-img convert -f raw -O vmdk $IMAGE_DNAME "../Output/$IMAGE_NAME".vmdk
 
