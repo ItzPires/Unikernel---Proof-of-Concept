@@ -3,6 +3,7 @@
 ERROR_FOUND=false
 
 KERNEL="../kernel/arch/x86_64/boot/bzImage"
+KERNEL=$(readlink -f "$KERNEL")
 IMAGE="../Output/image.img"
 
 usage() {
@@ -44,13 +45,26 @@ if [ "$TARGET" = "qemu" ]; then
 
 elif [ "$TARGET" = "vmware" ]; then
 echo "Building Unikernel to VMWare"
-IMAGE_SIZE_MB=100
 IMAGE_NAME="disk"
 IMAGE_DNAME="$IMAGE_NAME.img"
 MOUNT_DIR="/mnt/disk"
 
-echo "Criando imagem vazia de $IMAGE_SIZE_MB MB..."
-dd if=/dev/zero of=$IMAGE_DNAME bs=1M count=$IMAGE_SIZE_MB
+# Calculate the size of the image in KB
+BOOT_DIR_TEMP="../Output/boot_contents_temp"
+GRUB_DIR="/usr/lib/grub/i386-pc"
+
+# Create a temporary directory for boot contents
+mkdir -p "$BOOT_DIR_TEMP"
+cp "$KERNEL" "$BOOT_DIR_TEMP/" # Copy the kernel
+cp "$IMAGE" "$BOOT_DIR_TEMP/" # Copy the image
+cp -r "$GRUB_DIR" "$BOOT_DIR_TEMP/grub/i386-pc" # Copy the grub files
+
+# Calculate the size of the image in KB
+TOTAL_SIZE_KB=$(du -sk "$BOOT_DIR_TEMP" | awk '{print $1}')
+TOTAL_SIZE_KB=$((TOTAL_SIZE_KB + 2048)) # 2 MB for extra space
+
+echo "Criando imagem vazia de $TOTAL_SIZE_KB KB..."
+dd if=/dev/zero of=$IMAGE_DNAME bs=1K count=$TOTAL_SIZE_KB
 
 echo "Associando imagem ao dispositivo loop..."
 LOOP_DEVICE=$(sudo losetup -fP --show $IMAGE_DNAME)
@@ -99,4 +113,5 @@ sudo umount $MOUNT_DIR
 qemu-img convert -f raw -O vmdk $IMAGE_DNAME "../Output/$IMAGE_NAME".vmdk
 
 rm -r $IMAGE_DNAME
+rm -r $BOOT_DIR_TEMP
 fi
