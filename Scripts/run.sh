@@ -40,7 +40,7 @@ fi
 
 if [ "$TARGET" = "qemu" ]; then
     echo "Running Unikernel"
-    qemu-system-x86_64 -kernel "$KERNEL" -initrd "$IMAGE" -append "console=ttyS0" -nographic
+    qemu-system-x86_64 -kernel "$KERNEL" -initrd "$IMAGE" -append "console=ttyS0" -enable-kvm -nographic
 
 elif [ "$TARGET" = "vmware" ]; then
 echo "Building Unikernel to VMWare"
