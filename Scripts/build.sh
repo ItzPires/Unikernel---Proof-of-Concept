@@ -39,11 +39,11 @@ make -j$(nproc)
 
 # Image creation
 echo "Preparing the image..."
-mkdir -p $SCRIPT_DIR/../Output/initramfs/{bin,sbin,etc,proc,sys,newroot}
-cp "$BINARY" $SCRIPT_DIR/../Output/initramfs/bin/
+mkdir -p $SCRIPT_DIR/../Output/RAW/initramfs/{bin,sbin,etc,proc,sys,newroot}
+cp "$BINARY" $SCRIPT_DIR/../Output/RAW/initramfs/bin/
 
 # Program initiation file in unikernel
-cat << EOF > $SCRIPT_DIR/../Output/initramfs/init
+cat << EOF > $SCRIPT_DIR/../Output/RAW/initramfs/init
 #!/bin/sh
 mount -t proc none /proc
 mount -t sysfs none /sys
@@ -52,11 +52,11 @@ $BINARY_BIN $@
 poweroff -f
 EOF
 
-chmod +x $SCRIPT_DIR/../Output/initramfs/init
+chmod +x $SCRIPT_DIR/../Output/RAW/initramfs/init
 
 # Image compilation
-cp -a /bin/busybox $SCRIPT_DIR/../Output/initramfs/bin/
-cd $SCRIPT_DIR/../Output/initramfs/bin
+cp -a /bin/busybox $SCRIPT_DIR/../Output/RAW/initramfs/bin/
+cd $SCRIPT_DIR/../Output/RAW/initramfs/bin
 for i in $(./busybox --list); do ln -s busybox $i; done
 cd ../
 find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../image.img
