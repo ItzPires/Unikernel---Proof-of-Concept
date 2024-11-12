@@ -168,5 +168,5 @@ elif [ "$TARGET" = "vmware" ]; then
     build_vmware
     create_vmx
     echo
-    echo "Usage: Open vmware with file '/Output/vmware/$IMAGE_NAME.vmx' and '/Output/vmware/$IMAGE_NAME.vmdx' and start the VM"
+    echo "Usage: Open vmware with file '/Output/vmware/$IMAGE_NAME.vmx' and '/Output/vmware/$IMAGE_NAME.vmdk' and start the VM"
 fi
