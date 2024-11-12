@@ -51,12 +51,14 @@ git submodule update --init --recursive
 ```bash
 ./Scripts/run.sh -t qemu
 ```
+This command will open a monitor showing the execution of the proof of concept in a virtual machine.
+
 - To run the Unikernel in VMware:
 ```bash
 ./Scripts/run.sh -t vmware
 ```
 
-This command will generate a file called disk.vmdk in the Output folder. To run the kernel in VMware, you must create a virtual machine in VMware, and during creation, you must select you will install the operating system later. In the disk creation menu, you should select, "Use an existing disk", and select the disk.vmdk file. The virtual machine is ready to be started.
+This command will generate a file called disk.vmx and disk.vmdk in the "/Output/vmware" folder. To run the kernel in VMware, open vmware with file '/Output/vmware/disk.vmx'  and start the VM".
 
 - To run the Unikernel in VMware ESXi:
 
