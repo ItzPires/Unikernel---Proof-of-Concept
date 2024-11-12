@@ -1,5 +1,7 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 if [ -z "$1" ] || [ "$1" == "-h" ]; then
     echo "Usage: $0 <path_to_binary> [additional_parameters]"
     exit 1
@@ -25,7 +27,7 @@ Compile the executable with the -static flag."
 fi
 
 # Go to kernel folder
-if ! cd ../kernel 2>/dev/null; then
+if ! cd $SCRIPT_DIR/../kernel 2>/dev/null; then
         echo "Error: Could not access the 'kernel' directory. Please check if the submodules are initialized."
         exit 1
 fi
@@ -37,11 +39,11 @@ make -j$(nproc)
 
 # Image creation
 echo "Preparing the image..."
-mkdir -p ../Output/initramfs/{bin,sbin,etc,proc,sys,newroot}
-cp "$BINARY" ../Output/initramfs/bin/
+mkdir -p $SCRIPT_DIR/../Output/initramfs/{bin,sbin,etc,proc,sys,newroot}
+cp "$BINARY" $SCRIPT_DIR/../Output/initramfs/bin/
 
 # Program initiation file in unikernel
-cat << EOF > ../Output/initramfs/init
+cat << EOF > $SCRIPT_DIR/../Output/initramfs/init
 #!/bin/sh
 mount -t proc none /proc
 mount -t sysfs none /sys
@@ -50,11 +52,11 @@ $BINARY_BIN $@
 poweroff -f
 EOF
 
-chmod +x ../Output/initramfs/init
+chmod +x $SCRIPT_DIR/../Output/initramfs/init
 
 # Image compilation
-cp -a /bin/busybox ../Output/initramfs/bin/
-cd ../Output/initramfs/bin
+cp -a /bin/busybox $SCRIPT_DIR/../Output/initramfs/bin/
+cd $SCRIPT_DIR/../Output/initramfs/bin
 for i in $(./busybox --list); do ln -s busybox $i; done
 cd ../
 find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../image.img
