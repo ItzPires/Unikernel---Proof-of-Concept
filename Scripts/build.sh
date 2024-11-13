@@ -2,6 +2,8 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+SCRIPTS_KERNEL_DIR="$SCRIPT_DIR/Kernel/"
+
 if [ -z "$1" ] || [ "$1" == "-h" ]; then
     echo "Usage: $0 <path_to_binary> [additional_parameters]"
     exit 1
@@ -43,14 +45,9 @@ mkdir -p $SCRIPT_DIR/../Output/RAW/initramfs/{bin,sbin,etc,proc,sys,newroot}
 cp "$BINARY" $SCRIPT_DIR/../Output/RAW/initramfs/bin/
 
 # Program initiation file in unikernel
-cat << EOF > $SCRIPT_DIR/../Output/RAW/initramfs/init
-#!/bin/sh
-mount -t proc none /proc
-mount -t sysfs none /sys
-echo "[Unikernel Proof of Concept]"
-$BINARY_BIN $@
-poweroff -f
-EOF
+INIT_TEMPLATE_FILE="$SCRIPTS_KERNEL_DIR/init"
+INIT_FILE="$SCRIPT_DIR/../Output/RAW/initramfs/init"
+sed "s/{{BINARY_BIN}}/$BINARY_BIN/g" "$INIT_TEMPLATE_FILE" > "$INIT_FILE"
 
 chmod +x $SCRIPT_DIR/../Output/RAW/initramfs/init
 
