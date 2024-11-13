@@ -3,10 +3,12 @@
 ERROR_FOUND=false
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+TEMPLATE_DIR="$SCRIPT_DIR/Templates/"
+OUTPUT_DIR="$SCRIPT_DIR/../Output/"
+
 KERNEL="$SCRIPT_DIR/../kernel/arch/x86_64/boot/bzImage"
 KERNEL=$(readlink -f "$KERNEL")
-IMAGE="$SCRIPT_DIR/../Output/RAW/image.img"
-
+IMAGE="$OUTPUT_DIR/RAW/image.img"
 
 # Functions
 usage() {
@@ -29,7 +31,7 @@ IMAGE_DNAME="$IMAGE_NAME.img"
 MOUNT_DIR="/mnt/disk"
 
 # Calculate the size of the image in KB
-BOOT_DIR_TEMP="$SCRIPT_DIR/../Output/TEMP/boot_contents_temp"
+BOOT_DIR_TEMP="$OUTPUT_DIR/TEMP/boot_contents_temp"
 GRUB_DIR="/usr/lib/grub/i386-pc"
 
 # Create a temporary directory for boot contents
@@ -78,53 +80,19 @@ EOF
 
 sudo umount $MOUNT_DIR
 
-mkdir -p "$SCRIPT_DIR/../Output/vmware"
-qemu-img convert -f raw -O vmdk $IMAGE_DNAME "$SCRIPT_DIR/../Output/vmware/$IMAGE_NAME".vmdk
+mkdir -p "$OUTPUT_DIR/vmware"
+qemu-img convert -f raw -O vmdk $IMAGE_DNAME "$OUTPUT_DIR/vmware/$IMAGE_NAME".vmdk
 
 rm -r $IMAGE_DNAME
 rm -rf $BOOT_DIR_TEMP
 }
 
 create_vmx() {
-cat <<EOF > $SCRIPT_DIR/../Output/vmware/$IMAGE_NAME.vmx
-.encoding = "windows-1252"
-config.version = "8"
-virtualHW.version = "8"
-pciBridge0.present = "TRUE"
-pciBridge4.present = "TRUE"
-pciBridge4.virtualDev = "pcieRootPort"
-pciBridge4.functions = "8"
-pciBridge5.present = "TRUE"
-pciBridge5.virtualDev = "pcieRootPort"
-pciBridge5.functions = "8"
-pciBridge6.present = "TRUE"
-pciBridge6.virtualDev = "pcieRootPort"
-pciBridge6.functions = "8"
-pciBridge7.present = "TRUE"
-pciBridge7.virtualDev = "pcieRootPort"
-pciBridge7.functions = "8"
-vmci0.present = "TRUE"
-hpet0.present = "TRUE"
-nvram = "${IMAGE_NAME}.nvram"
-virtualHW.productCompatibility = "hosted"
-powerType.powerOff = "soft"
-powerType.powerOn = "soft"
-powerType.suspend = "soft"
-powerType.reset = "soft"
-displayName = "${IMAGE_NAME}"
-guestOS = "other"
-tools.syncTime = "FALSE"
-cpuid.coresPerSocket = "1"
-memsize = "1024"
-ide0:0.fileName = "${IMAGE_NAME}.vmdk"
-ide0:0.present = "TRUE"
-ethernet0.virtualDev = "vmxnet3"
-ethernet0.connectionType = "nat"
-ethernet0.addressType = "generated"
-ethernet0.present = "TRUE"
-extendedConfigFile = "${IMAGE_NAME}.vmxf"
-floppy0.present = "FALSE"
-EOF
+    local output_file="${OUTPUT_DIR}/vmware/${IMAGE_NAME}.vmx"
+    local template_vmx="$TEMPLATE_DIR/vmware.vmx"
+
+    # Replace placeholders with actual values
+    sed "s/{{IMAGE_NAME}}/$IMAGE_NAME/g" "$template_vmx" > "$output_file"
 }
 
 # Init
