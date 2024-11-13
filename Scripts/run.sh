@@ -27,7 +27,7 @@ run_qemu() {
 build_vmware() {
 echo "Building Unikernel to VMWare"
 IMAGE_NAME="disk"
-IMAGE_DNAME="$IMAGE_NAME.img"
+IMAGE_DNAME="$OUTPUT_DIR/TEMP/$IMAGE_NAME.img"
 MOUNT_DIR="/mnt/disk"
 
 # Calculate the size of the image in KB
@@ -95,6 +95,13 @@ create_vmx() {
     sed "s/{{IMAGE_NAME}}/$IMAGE_NAME/g" "$template_vmx" > "$output_file"
 }
 
+define_owner() {
+    CURRENT_USER=${SUDO_USER:-$(whoami)}
+    echo "Defining owner to $CURRENT_USER"
+    sudo chmod 664 "$OUTPUT_DIR/vmware/"*
+    sudo chown -R "$CURRENT_USER":"$CURRENT_USER" "$OUTPUT_DIR/vmware"
+}
+
 # Init
 
 # Check number of arguments
@@ -135,6 +142,7 @@ if [ "$TARGET" = "qemu" ]; then
 elif [ "$TARGET" = "vmware" ]; then
     build_vmware
     create_vmx
+    define_owner
     echo
     echo "Usage: Open vmware with file '/Output/vmware/$IMAGE_NAME.vmx' and '/Output/vmware/$IMAGE_NAME.vmdk' and start the VM"
 fi
