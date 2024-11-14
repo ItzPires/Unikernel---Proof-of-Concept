@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Base directory for mount points
 MOUNT_DIR_BASE="/mnt/disk"
@@ -18,13 +18,17 @@ setup_and_mount_disk() {
     mknod /dev/${disk}1 b ${major_minor%:*} $((${major_minor#*:} + 1))
 
     # Format the partition as ext4
-    mke2fs -t ext4 /dev/${disk}1
+    ./sbin/mke2fs -t ext4 /dev/${disk}1
 
     # Create the mount point and mount the partition
     mkdir -p $mount_point
     mount -t ext4 /dev/${disk}1 $mount_point
     echo "Disc $disk mounted at $mount_point"
 }
+
+# Init
+mknod /dev/null c 1 3
+mknod /dev/sda b 8 0
 
 # Get the list of available disks
 for disk in $(ls /sys/class/block/ | grep -E '^sd[b-z]$'); do
