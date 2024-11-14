@@ -2,5 +2,6 @@
 mount -t proc none /proc
 mount -t sysfs none /sys
 echo "[Unikernel Proof of Concept]"
+./scripts/mount_all_disks
 {{BINARY_BIN}} $@
 poweroff -f
