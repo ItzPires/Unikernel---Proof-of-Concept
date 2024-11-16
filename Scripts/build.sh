@@ -1,5 +1,9 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+SCRIPTS_KERNEL_DIR="$SCRIPT_DIR/Kernel/"
+
 if [ -z "$1" ] || [ "$1" == "-h" ]; then
     echo "Usage: $0 <path_to_binary> [additional_parameters]"
     exit 1
@@ -25,7 +29,7 @@ Compile the executable with the -static flag."
 fi
 
 # Go to kernel folder
-if ! cd ../kernel 2>/dev/null; then
+if ! cd $SCRIPT_DIR/../kernel 2>/dev/null; then
         echo "Error: Could not access the 'kernel' directory. Please check if the submodules are initialized."
         exit 1
 fi
@@ -37,24 +41,40 @@ make -j$(nproc)
 
 # Image creation
 echo "Preparing the image..."
-mkdir -p ../Output/initramfs/{bin,sbin,etc,proc,sys,newroot}
-cp "$BINARY" ../Output/initramfs/bin/
+mkdir -p $SCRIPT_DIR/../Output/RAW/initramfs/{bin,sbin,etc,proc,sys,newroot,scripts,lib,lib64}
+cp "$BINARY" $SCRIPT_DIR/../Output/RAW/initramfs/bin/
+chmod 777 $SCRIPT_DIR/../Output/RAW/initramfs/$BINARY_BIN
+
+# Copy the scripts to scripts folder
+cp "$SCRIPTS_KERNEL_DIR/mount_all_disks" "$SCRIPT_DIR/../Output/RAW/initramfs/scripts/"
+chmod +x $SCRIPT_DIR/../Output/RAW/initramfs/scripts/mount_all_disks
 
 # Program initiation file in unikernel
-cat << EOF > ../Output/initramfs/init
-#!/bin/sh
-mount -t proc none /proc
-mount -t sysfs none /sys
-echo "[Unikernel Proof of Concept]"
-$BINARY_BIN $@
-poweroff -f
-EOF
+INIT_TEMPLATE_FILE="$SCRIPTS_KERNEL_DIR/init"
+INIT_FILE="$SCRIPT_DIR/../Output/RAW/initramfs/init"
+BINARY_AND_ARGS="$BINARY_BIN $@"
+sed "s#{{BINARY_AND_ARGS}}#$BINARY_AND_ARGS#g" "$INIT_TEMPLATE_FILE" > "$INIT_FILE"
+chmod 777 $INIT_FILE
 
-chmod +x ../Output/initramfs/init
+chmod +x $SCRIPT_DIR/../Output/RAW/initramfs/init
 
 # Image compilation
-cp -a /bin/busybox ../Output/initramfs/bin/
-cd ../Output/initramfs/bin
+cp -a /bin/busybox $SCRIPT_DIR/../Output/RAW/initramfs/bin/
+cd $SCRIPT_DIR/../Output/RAW/initramfs/bin
+
+sudo cp $(which mke2fs) $SCRIPT_DIR/../Output/RAW/initramfs/sbin/
+sudo cp /lib/x86_64-linux-gnu/libext2fs.so.2 $SCRIPT_DIR/../Output/RAW/initramfs/lib/
+sudo cp /lib/x86_64-linux-gnu/libcom_err.so.2 $SCRIPT_DIR/../Output/RAW/initramfs/lib/
+sudo cp /lib/x86_64-linux-gnu/libblkid.so.1 $SCRIPT_DIR/../Output/RAW/initramfs/lib/
+sudo cp /lib/x86_64-linux-gnu/libuuid.so.1 $SCRIPT_DIR/../Output/RAW/initramfs/lib/
+sudo cp /lib/x86_64-linux-gnu/libe2p.so.2 $SCRIPT_DIR/../Output/RAW/initramfs/lib/
+sudo cp /lib/x86_64-linux-gnu/libc.so.6 $SCRIPT_DIR/../Output/RAW/initramfs/lib/
+sudo cp /lib64/ld-linux-x86-64.so.2 $SCRIPT_DIR/../Output/RAW/initramfs/lib64/
+
+sudo chmod 777 $SCRIPT_DIR/../Output/RAW/initramfs/sbin/mke2fs
+sudo chmod 777 $SCRIPT_DIR/../Output/RAW/initramfs/lib/*
+sudo chmod 777 $SCRIPT_DIR/../Output/RAW/initramfs/lib64/*
+
 for i in $(./busybox --list); do ln -s busybox $i; done
 cd ../
 find . -print0 | cpio --null -ov --format=newc | gzip -9 > ../image.img

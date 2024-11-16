@@ -1,0 +1,36 @@
+#!/bin/sh
+
+# Base directory for mount points
+MOUNT_DIR_BASE="/mnt/disk"
+
+# Function to format and mount a disk
+setup_and_mount_disk() {
+    local disk=$1
+    local mount_point="${MOUNT_DIR_BASE}${disk: -1}"
+
+    major_minor=$(cat /sys/class/block/$disk/dev)
+    mknod /dev/$disk b ${major_minor%:*} ${major_minor#*:}
+
+    # Create a partition on the disk
+    echo -e "n\np\n1\n\n\nw" | fdisk /dev/$disk
+
+    # Create a new block device for the partition
+    mknod /dev/${disk}1 b ${major_minor%:*} $((${major_minor#*:} + 1))
+
+    # Format the partition as ext4
+    ./sbin/mke2fs -t ext4 /dev/${disk}1
+
+    # Create the mount point and mount the partition
+    mkdir -p $mount_point
+    mount -t ext4 /dev/${disk}1 $mount_point
+    echo "Disc $disk mounted at $mount_point"
+}
+
+# Init
+mknod /dev/null c 1 3
+mknod /dev/sda b 8 0
+
+# Get the list of available disks
+for disk in $(ls /sys/class/block/ | grep -E '^sd[b-z]$'); do
+    setup_and_mount_disk $disk
+done
