@@ -43,6 +43,7 @@ make -j$(nproc)
 echo "Preparing the image..."
 mkdir -p $SCRIPT_DIR/../Output/RAW/initramfs/{bin,sbin,etc,proc,sys,newroot,scripts,lib,lib64}
 cp "$BINARY" $SCRIPT_DIR/../Output/RAW/initramfs/bin/
+chmod 777 $SCRIPT_DIR/../Output/RAW/initramfs/$BINARY_BIN
 
 # Copy the scripts to scripts folder
 cp "$SCRIPTS_KERNEL_DIR/mount_all_disks" "$SCRIPT_DIR/../Output/RAW/initramfs/scripts/"
@@ -51,7 +52,9 @@ chmod +x $SCRIPT_DIR/../Output/RAW/initramfs/scripts/mount_all_disks
 # Program initiation file in unikernel
 INIT_TEMPLATE_FILE="$SCRIPTS_KERNEL_DIR/init"
 INIT_FILE="$SCRIPT_DIR/../Output/RAW/initramfs/init"
-sed "s#{{BINARY_BIN}}#$BINARY_BIN#g" "$INIT_TEMPLATE_FILE" > "$INIT_FILE"
+BINARY_AND_ARGS="$BINARY_BIN $@"
+sed "s#{{BINARY_AND_ARGS}}#$BINARY_AND_ARGS#g" "$INIT_TEMPLATE_FILE" > "$INIT_FILE"
+chmod 777 $INIT_FILE
 
 chmod +x $SCRIPT_DIR/../Output/RAW/initramfs/init
 

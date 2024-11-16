@@ -26,10 +26,13 @@ Follow the steps below to configure and run the project:
 - Install the necessary development tools and libraries:
 ```bash
 sudo apt-get update
+sudo apt install build-essential
 sudo apt install flex
 sudo apt install bison
 sudo apt install libelf-dev
 sudo apt install libssl-dev
+sudo apt install bc
+sudo apt install busybox-static
 sudo apt install qemu
 ```
 
