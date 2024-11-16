@@ -1,9 +1,47 @@
 #!/bin/bash
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 SCRIPTS_KERNEL_DIR="$SCRIPT_DIR/Kernel/"
 
+# Function to apply PREEMPT-RT patch
+apply_preempt_rt_patch() {
+    echo "Checking for PREEMPT-RT patch..."
+    
+    # Check if the kernel already has PREEMPT-RT applied
+    if ! grep -q "CONFIG_PREEMPT_RT" $SCRIPT_DIR/../kernel/.config; then
+        echo "Applying PREEMPT-RT patch..."
+
+        # Download PREEMPT-RT patch if not present
+        PATCH_URL="https://cdn.kernel.org/pub/linux/kernel/projects/rt/6.12/older/patch-6.12-rc1-rt1.patch.xz"
+        PATCH_DIR="$SCRIPT_DIR/../kernel"
+
+        # Download and apply the patch
+        curl -L $PATCH_URL -o "$PATCH_DIR/patch-6.12-rc1-rt1.patch.xz"
+        cd $PATCH_DIR && xz -d patch-6.12-rc1-rt1.patch.xz
+        patch -p1 < patch-6.12-rc1-rt1.patch.xz
+    else
+        echo "PREEMPT-RT patch already applied."
+    fi
+}
+
+# Enable CONFIG_EXPERT and CONFIG_PREEMPT_RT
+enable_expert_and_rt() {
+    echo "Enabling CONFIG_EXPERT and CONFIG_PREEMPT_RT..."
+
+    # Edit the .config file to enable CONFIG_EXPERT
+    #echo "CONFIG_EXPERT=y" >> $SCRIPT_DIR/../kernel/.config
+
+    # Enable CONFIG_PREEMPT_RT if not already enabled
+    #if ! grep -q "CONFIG_PREEMPT_RT" $SCRIPT_DIR/../kernel/.config; then
+    #    echo "Enabling CONFIG_PREEMPT_RT..."
+    #    echo "CONFIG_PREEMPT_RT=y" >> $SCRIPT_DIR/../kernel/.config
+    #fi
+
+    # Copy the config file
+    cp $SCRIPT_DIR/Templates/config_kernel $SCRIPT_DIR/../kernel/.config
+}
+
+# Check if the first argument is provided
 if [ -z "$1" ] || [ "$1" == "-h" ]; then
     echo "Usage: $0 <path_to_binary> [additional_parameters]"
     exit 1
@@ -36,8 +74,10 @@ fi
 
 # Compiling the kernel
 echo "Compiling the kernel now..."
-make defconfig
-make -j$(nproc)
+make defconfig # Create defconfig
+apply_preempt_rt_patch # Apply the PREEMPT-RT patch
+enable_expert_and_rt # Enable CONFIG_EXPERT and CONFIG_PREEMPT_RT
+make -j$(nproc) # Compile the kernel
 
 # Image creation
 echo "Preparing the image..."
